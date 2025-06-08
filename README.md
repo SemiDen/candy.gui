@@ -1,9 +1,5 @@
 # CANDY.GUI
 V 0.1
-Candy gui is a gui made by SemiDen/Candy. The gui is a simple one but has a good amount of features
-such as-
--NOCLIP
--FLY
--SPEED CHANGERS
--ESP
-and some others.
+CANDY GUI IS CURRENTLY IN BETA--
+A script for roblox with a bit of features. 
+Some are buggy and unable to turn off or even work.
