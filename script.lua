@@ -3,12 +3,11 @@ local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
 local Lighting = game:GetService("Lighting")
 local StarterGui = game:GetService("StarterGui")
-
+local HttpService = game:GetService("HttpService")
 
 local LocalPlayer = Players.LocalPlayer
 repeat task.wait() until LocalPlayer
 local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-
 
 local gui = Instance.new("ScreenGui")
 gui.Name = "CANDY_GUI"
@@ -17,8 +16,8 @@ gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.Parent = PlayerGui
 
 local panel = Instance.new("Frame")
-panel.Size = UDim2.new(0, 250, 0, 600)
-panel.Position = UDim2.new(0, 10, 0.5, -300)
+panel.Size = UDim2.new(0, 250, 0, 650)
+panel.Position = UDim2.new(0, 10, 0.5, -325)
 panel.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 panel.BorderSizePixel = 0
 panel.Active = true
@@ -34,7 +33,6 @@ title.Font = Enum.Font.SourceSansBold
 title.TextSize = 20
 title.Parent = panel
 
-
 local closeBtn = Instance.new("TextButton")
 closeBtn.Size = UDim2.new(0, 30, 0, 30)
 closeBtn.Position = UDim2.new(1, -30, 0, 0)
@@ -48,13 +46,11 @@ closeBtn.MouseButton1Click:Connect(function()
     gui.Enabled = not gui.Enabled
 end)
 
-
 UIS.InputBegan:Connect(function(input, processed)
     if not processed and input.KeyCode == Enum.KeyCode.F4 then
         gui.Enabled = not gui.Enabled
     end
 end)
-
 
 local function createButton(name, y, callback)
     local btn = Instance.new("TextButton")
@@ -107,7 +103,6 @@ local function createTextBox(y, placeholder)
     return textBox
 end
 
-
 local flying = false
 local bodyGyro, bodyVelocity, flyConn
 local control = {F=0, B=0, L=0, R=0, U=0, D=0}
@@ -153,7 +148,6 @@ local function stopFlying()
     if bodyVelocity then bodyVelocity:Destroy() bodyVelocity = nil end
 end
 
-
 UIS.InputBegan:Connect(function(input, processed)
     if processed then return end
     local key = input.KeyCode
@@ -174,7 +168,6 @@ UIS.InputEnded:Connect(function(input)
     if key == Enum.KeyCode.Space then control.U = 0 end
     if key == Enum.KeyCode.LeftShift then control.D = 0 end
 end)
-
 
 local espEnabled = false
 local espConn
@@ -231,7 +224,6 @@ local function toggleESP()
     end
 end
 
-
 local noclipEnabled = false
 local noclipConn
 
@@ -251,10 +243,9 @@ local function toggleNoclip()
         noclipConn = RunService.Stepped:Connect(noclipLoop)
     else
         if noclipConn then noclipConn:Disconnect() end
-        noclipLoop() 
+        noclipLoop()
     end
 end
-
 
 local function setWalkSpeed(speed)
     local char = LocalPlayer.Character
@@ -266,7 +257,6 @@ local function setWalkSpeed(speed)
     end
 end
 
-
 local function sendSystemMessage(message)
     if message == "" then return end
     StarterGui:SetCore("ChatMakeSystemMessage", {
@@ -277,16 +267,13 @@ local function sendSystemMessage(message)
     })
 end
 
-
 local currentSkybox
 
 local function changeSkybox(imageId)
-    
     if currentSkybox then
         currentSkybox:Destroy()
     end
 
-    
     if not imageId or imageId == "" then
         Lighting.Sky.SkyboxBk = "rbxasset://textures/sky/sky512_bk.tex"
         Lighting.Sky.SkyboxDn = "rbxasset://textures/sky/sky512_dn.tex"
@@ -297,7 +284,6 @@ local function changeSkybox(imageId)
         return
     end
 
-    
     currentSkybox = Instance.new("Sky")
     currentSkybox.SkyboxBk = "rbxassetid://"..imageId
     currentSkybox.SkyboxDn = "rbxassetid://"..imageId
@@ -308,14 +294,39 @@ local function changeSkybox(imageId)
     currentSkybox.Parent = Lighting
 end
 
+local function flingPlayer(player, power)
+    local character = player.Character
+    if not character then return end
+    
+    local hrp = character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    
+    local bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.Velocity = Vector3.new(math.random(-power,power), power, math.random(-power,power))
+    bodyVelocity.MaxForce = Vector3.new(1,1,1) * power
+    bodyVelocity.P = power
+    bodyVelocity.Parent = hrp
+    
+    game:GetService("Debris"):AddItem(bodyVelocity, 0.5)
+end
+
+local function flingSelf()
+    flingPlayer(LocalPlayer, 5000)
+end
+
+local function flingAll()
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer then
+            flingPlayer(player, 5000)
+        end
+    end
+end
 
 local y = 35
-
 
 createLabel("Flight Controls", y); y = y + 20
 createButton("Fly (Hold Space/Shift)", y, startFlying); y = y + 35
 createButton("Stop Flying", y, stopFlying); y = y + 35
-
 
 createLabel("ESP Controls", y); y = y + 20
 local espBtn = createButton("ESP: OFF", y, function()
@@ -323,19 +334,20 @@ local espBtn = createButton("ESP: OFF", y, function()
     espBtn.Text = "ESP: "..(espEnabled and "ON" or "OFF")
 end); y = y + 35
 
-
 createLabel("Noclip Controls", y); y = y + 20
 local noclipBtn = createButton("Noclip: OFF", y, function()
     toggleNoclip()
     noclipBtn.Text = "Noclip: "..(noclipEnabled and "ON" or "OFF")
 end); y = y + 35
 
-
 createLabel("Speed Controls", y); y = y + 20
 createButton("Normal (16)", y, function() setWalkSpeed(16) end); y = y + 35
 createButton("Fast (50)", y, function() setWalkSpeed(50) end); y = y + 35
 createButton("Slow (8)", y, function() setWalkSpeed(8) end); y = y + 35
 
+createLabel("Fling Controls", y); y = y + 20
+createButton("Fling Self", y, flingSelf); y = y + 35
+createButton("Fling Others", y, flingAll); y = y + 35
 
 createLabel("System Message", y); y = y + 20
 local msgBox = createTextBox(y, "Enter message"); y = y + 35
@@ -343,7 +355,6 @@ createButton("Send as [SYSTEM]", y, function()
     sendSystemMessage(msgBox.Text)
     msgBox.Text = ""
 end); y = y + 35
-
 
 createLabel("Skybox Changer", y); y = y + 20
 local skyboxBox = createTextBox(y, "Enter Image ID"); y = y + 35
@@ -354,7 +365,6 @@ createButton("Reset Skybox", y, function()
     changeSkybox("")
     skyboxBox.Text = ""
 end); y = y + 35
-
 
 local statusLabel = createLabel("GUI Ready - F4 to toggle", y)
 statusLabel.TextXAlignment = Enum.TextXAlignment.Center
